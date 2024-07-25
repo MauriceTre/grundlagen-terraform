@@ -2,57 +2,56 @@ provider "aws" {
   region = "eu-central-1"
 }
 
-# Sicherheitsgruppe definieren
-resource "aws_security_group" "ingress_access" {
-  name        = "allow_ssh"
-  description = "Security group for ingress access" # ASCII-only description
-  vpc_id      = "vpc-04028e8a2a102aa3a"             # Ersetze durch deine VPC-ID
-
-  # Regel für eingehenden SSH-Zugriff
-  ingress {
-    description = "Allow SSH"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  ingress {
-    description = "Allow HTTP"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  ingress {
-    description = "Allow HTTPS"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-
-  # Alle ausgehenden Verbindungen erlauben
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+# Security Group erstellen, die SSH über IPv4 (überall) erlaubt
+resource "aws_security_group" "allow_ingress" {
+  # keine verpflichtende Argumente bei Security-Groups
 }
 
-# EC2-Instanz definieren
-resource "aws_instance" "baklava" {
-  instance_type = "t2.micro"
+resource "aws_security_group_rule" "ingress_ssh" {
+  from_port         = 22
+  to_port           = 22
+  security_group_id = aws_security_group.allow_ingress.id
+  protocol          = "tcp"
+  type              = "ingress"
+  cidr_blocks       = ["0.0.0.0/0"]
+}
+resource "aws_security_group_rule" "ingress_HTTP" {
+  from_port         = 80
+  to_port           = 80
+  security_group_id = aws_security_group.allow_ingress.id
+  protocol          = "tcp"
+  type              = "ingress"
+  cidr_blocks       = ["0.0.0.0/0"]
+}
+resource "aws_security_group_rule" "ingress_HTTPS" {
+  from_port         = 443
+  to_port           = 443
+  security_group_id = aws_security_group.allow_ingress.id
+  protocol          = "tcp"
+  type              = "ingress"
+  cidr_blocks       = ["0.0.0.0/0"]
+}
+
+resource "aws_instance" "Baklava" {
   ami           = "ami-071878317c449ae48"
+  instance_type = "t2.micro"
 
-  # Sicherheitsgruppe zuweisen
-  vpc_security_group_ids = [aws_security_group.ingress_access.id]
-
-  # SSH-Schlüsselpaar hinzufügen
-  key_name = "terraform"
-
+  # Instanz einen Name-Tag für AWS-Management-Konsole geben
   tags = {
-    Name = "baklava"
+    Name = "Baklava"
   }
+
+  # Instanz mit Security-Group verknüpfen
+  vpc_security_group_ids = [aws_security_group.allow_ingress.id]
+}
+
+# Instanz-IP ausgeben
+output "baklava_ip" {
+  value = aws_instance.Baklava.public_ip
+}
+output "name_der_security_gruppe" {
+  value = aws_security_group.allow_ingress.name
+}
+output "Arn" {
+  value = aws_security_group.allow_ingress.arn
 }
