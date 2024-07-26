@@ -52,6 +52,21 @@ resource "aws_instance" "Baklava" {
   vpc_security_group_ids = [aws_security_group.allow_ingress.id]
 }
 
+resource "aws_s3_bucket" "mammamia" {
+
+}
+
+resource "aws_dynamodb_table" "tesla" {
+  name = "tesla-table"
+  read_capacity   = 5
+  write_capacity  = 5
+  hash_key        = "id"
+
+  attribute {
+    name = "id"
+    type = "S"
+}
+}
 # Instanz-IP ausgeben
 output "baklava_ip" {
   value = aws_instance.Baklava.public_ip
@@ -61,4 +76,10 @@ output "name_der_security_gruppe" {
 }
 output "Arn" {
   value = aws_security_group.allow_ingress.arn
+}
+output "aws_dynamodb_table" {
+  value = aws_dynamodb_table.tesla.name
+}
+output "s3" {
+  value = aws_s3_bucket.mammamia.id
 }
